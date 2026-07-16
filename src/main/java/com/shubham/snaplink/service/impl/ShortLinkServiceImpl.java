@@ -1,0 +1,138 @@
+package com.shubham.snaplink.service.impl;
+
+import com.shubham.snaplink.dto.request.CreateShortLinkRequest;
+import com.shubham.snaplink.dto.response.ShortLinkResponse;
+import com.shubham.snaplink.entity.ClickAnalytics;
+import com.shubham.snaplink.entity.ShortLink;
+import com.shubham.snaplink.entity.User;
+import com.shubham.snaplink.repository.ClickAnalyticsRepository;
+import com.shubham.snaplink.repository.ShortLinkRepository;
+import com.shubham.snaplink.repository.UserRepository;
+import com.shubham.snaplink.service.ShortLinkService;
+import com.shubham.snaplink.util.ShortCodeGenerator;
+import jakarta.servlet.http.HttpServletRequest;
+import lombok.RequiredArgsConstructor;
+import org.springframework.stereotype.Service;
+
+import java.time.LocalDateTime;
+
+@Service
+@RequiredArgsConstructor
+public class ShortLinkServiceImpl implements ShortLinkService {
+
+    private final ShortLinkRepository shortLinkRepository;
+    private final UserRepository userRepository;
+    private final ClickAnalyticsRepository clickAnalyticsRepository;
+    private final ShortCodeGenerator shortCodeGenerator;
+
+    @Override
+    public ShortLinkResponse createShortLink(CreateShortLinkRequest request) {
+
+        if (request.getCustomAlias() != null &&
+                !request.getCustomAlias().isBlank() &&
+                shortLinkRepository.existsByCustomAlias(request.getCustomAlias())) {
+            throw new RuntimeException("Custom alias already exists");
+        }
+
+        String shortCode;
+
+        if (request.getCustomAlias() != null &&
+                !request.getCustomAlias().isBlank()) {
+
+            shortCode = request.getCustomAlias();
+
+        } else {
+
+            do {
+                shortCode = shortCodeGenerator.generateShortCode();
+            } while (shortLinkRepository.existsByShortCode(shortCode));
+        }
+
+        User user = userRepository.findById(1L)
+                .orElseThrow(() -> new RuntimeException("User not found"));
+
+        ShortLink shortLink = ShortLink.builder()
+                .originalUrl(request.getOriginalUrl())
+                .shortCode(shortCode)
+                .customAlias(request.getCustomAlias())
+                .password(request.getPassword())
+                .expiresAt(request.getExpiresAt())
+                .clickCount(0L)
+                .user(user)
+                .build();
+
+        shortLinkRepository.save(shortLink);
+
+        return ShortLinkResponse.builder()
+                .id(shortLink.getId())
+                .originalUrl(shortLink.getOriginalUrl())
+                .shortCode(shortLink.getShortCode())
+                .shortUrl("http://localhost:8082/" + shortLink.getShortCode())
+                .clickCount(shortLink.getClickCount())
+                .build();
+    }
+
+    @Override
+    public String redirect(String shortCode, HttpServletRequest request) {
+
+        ShortLink shortLink = shortLinkRepository.findByShortCode(shortCode)
+                .orElseThrow(() -> new RuntimeException("Short link not found"));
+
+        if (shortLink.getExpiresAt() != null &&
+                shortLink.getExpiresAt().isBefore(LocalDateTime.now())) {
+            throw new RuntimeException("Link has expired");
+        }
+
+        shortLink.setClickCount(shortLink.getClickCount() + 1);
+        shortLinkRepository.save(shortLink);
+
+        String userAgent = request.getHeader("User-Agent");
+
+        ClickAnalytics analytics = ClickAnalytics.builder()
+                .shortLink(shortLink)
+                .ipAddress(request.getRemoteAddr())
+                .browser(getBrowser(userAgent))
+                .operatingSystem(getOperatingSystem(userAgent))
+                .device(getDevice(userAgent))
+                .referrer(request.getHeader("Referer"))
+                .build();
+
+        clickAnalyticsRepository.save(analytics);
+
+        return shortLink.getOriginalUrl();
+    }
+
+    private String getBrowser(String userAgent) {
+
+        if (userAgent == null) return "Unknown";
+
+        if (userAgent.contains("Chrome")) return "Chrome";
+        if (userAgent.contains("Firefox")) return "Firefox";
+        if (userAgent.contains("Edg")) return "Edge";
+        if (userAgent.contains("Safari")) return "Safari";
+
+        return "Unknown";
+    }
+
+    private String getOperatingSystem(String userAgent) {
+
+        if (userAgent == null) return "Unknown";
+
+        if (userAgent.contains("Windows")) return "Windows";
+        if (userAgent.contains("Mac")) return "MacOS";
+        if (userAgent.contains("Linux")) return "Linux";
+        if (userAgent.contains("Android")) return "Android";
+        if (userAgent.contains("iPhone")) return "iOS";
+
+        return "Unknown";
+    }
+
+    private String getDevice(String userAgent) {
+
+        if (userAgent == null) return "Unknown";
+
+        if (userAgent.contains("Mobile")) return "Mobile";
+
+        return "Desktop";
+    }
+}
