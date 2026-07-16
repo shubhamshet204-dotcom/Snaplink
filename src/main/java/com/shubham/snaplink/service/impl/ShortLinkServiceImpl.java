@@ -25,6 +25,7 @@ import org.springframework.data.domain.Pageable;
 import org.springframework.data.domain.Sort;
 
 import java.time.LocalDateTime;
+import com.shubham.snaplink.service.cache.CacheService;
 
 
 @Service
@@ -36,6 +37,7 @@ public class ShortLinkServiceImpl implements ShortLinkService {
     private final ClickAnalyticsRepository clickAnalyticsRepository;
     private final ShortCodeGenerator shortCodeGenerator;
     private final ShortLinkMapper shortLinkMapper;
+    private final CacheService cacheService;
 
     private User getLoggedInUser() {
 
@@ -89,18 +91,31 @@ public class ShortLinkServiceImpl implements ShortLinkService {
     @Override
     public String redirect(String shortCode, HttpServletRequest request) {
 
-        ShortLink shortLink = shortLinkRepository
-                .findByShortCodeAndDeletedFalse(shortCode)
-                .orElseThrow(() -> new ResourceNotFoundException("Short link not found"));
+        // 1. Check Redis
+        ShortLink shortLink = cacheService.get(shortCode);
 
+        // 2. Cache Miss
+        if (shortLink == null) {
+
+            shortLink = shortLinkRepository
+                    .findByShortCodeAndDeletedFalse(shortCode)
+                    .orElseThrow(() ->
+                            new ResourceNotFoundException("Short link not found"));
+
+            cacheService.save(shortLink);
+        }
+
+        // 3. Expiry Check
         if (shortLink.getExpiresAt() != null &&
                 shortLink.getExpiresAt().isBefore(LocalDateTime.now())) {
             throw new LinkExpiredException("Link has expired");
         }
 
+        // 4. Increase Click Count
         shortLink.setClickCount(shortLink.getClickCount() + 1);
         shortLinkRepository.save(shortLink);
 
+        // 5. Save Analytics
         String userAgent = request.getHeader("User-Agent");
 
         ClickAnalytics analytics = ClickAnalytics.builder()
