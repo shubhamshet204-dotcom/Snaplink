@@ -5,6 +5,9 @@ import com.shubham.snaplink.dto.response.ShortLinkResponse;
 import com.shubham.snaplink.entity.ClickAnalytics;
 import com.shubham.snaplink.entity.ShortLink;
 import com.shubham.snaplink.entity.User;
+import com.shubham.snaplink.exception.LinkExpiredException;
+import com.shubham.snaplink.exception.ResourceAlreadyExistsException;
+import com.shubham.snaplink.exception.ResourceNotFoundException;
 import com.shubham.snaplink.mapper.ShortLinkMapper;
 import com.shubham.snaplink.repository.ClickAnalyticsRepository;
 import com.shubham.snaplink.repository.ShortLinkRepository;
@@ -33,7 +36,7 @@ public class ShortLinkServiceImpl implements ShortLinkService {
         if (request.getCustomAlias() != null &&
                 !request.getCustomAlias().isBlank() &&
                 shortLinkRepository.existsByCustomAlias(request.getCustomAlias())) {
-            throw new RuntimeException("Custom alias already exists");
+            throw new ResourceAlreadyExistsException("Custom alias already exists");
         }
 
         String shortCode;
@@ -51,7 +54,7 @@ public class ShortLinkServiceImpl implements ShortLinkService {
         }
 
         User user = userRepository.findById(1L)
-                .orElseThrow(() -> new RuntimeException("User not found"));
+                .orElseThrow(() -> new ResourceNotFoundException("User not found"));
 
         ShortLink shortLink = ShortLink.builder()
                 .originalUrl(request.getOriginalUrl())
@@ -72,11 +75,11 @@ public class ShortLinkServiceImpl implements ShortLinkService {
     public String redirect(String shortCode, HttpServletRequest request) {
 
         ShortLink shortLink = shortLinkRepository.findByShortCode(shortCode)
-                .orElseThrow(() -> new RuntimeException("Short link not found"));
+                .orElseThrow(() -> new ResourceNotFoundException("Short link not found"));
 
         if (shortLink.getExpiresAt() != null &&
                 shortLink.getExpiresAt().isBefore(LocalDateTime.now())) {
-            throw new RuntimeException("Link has expired");
+            throw new LinkExpiredException("Link has expired");
         }
 
         shortLink.setClickCount(shortLink.getClickCount() + 1);

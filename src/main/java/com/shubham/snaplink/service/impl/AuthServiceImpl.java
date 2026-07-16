@@ -5,6 +5,8 @@ import com.shubham.snaplink.dto.request.RegisterRequest;
 import com.shubham.snaplink.dto.response.AuthResponse;
 import com.shubham.snaplink.entity.Role;
 import com.shubham.snaplink.entity.User;
+import com.shubham.snaplink.exception.ResourceAlreadyExistsException;
+import com.shubham.snaplink.exception.ResourceNotFoundException;
 import com.shubham.snaplink.repository.UserRepository;
 import com.shubham.snaplink.security.service.JwtService;
 import com.shubham.snaplink.service.AuthService;
@@ -25,7 +27,7 @@ public class AuthServiceImpl implements AuthService {
     public AuthResponse register(RegisterRequest request) {
 
         if (userRepository.existsByEmail(request.getEmail())) {
-            throw new RuntimeException("Email already exists");
+            throw new ResourceAlreadyExistsException("Email already exists");
         }
 
         User user = User.builder()
@@ -44,7 +46,7 @@ public class AuthServiceImpl implements AuthService {
     public AuthResponse login(LoginRequest request) {
 
         User user = userRepository.findByEmail(request.getEmail())
-                .orElseThrow(() -> new RuntimeException("User not found"));
+                .orElseThrow(() -> new ResourceNotFoundException("User not found"));
 
         if (!passwordEncoder.matches(request.getPassword(), user.getPassword())) {
             throw new BadCredentialsException("Invalid credentials");
