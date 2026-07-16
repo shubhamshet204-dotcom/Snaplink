@@ -56,4 +56,11 @@ public class ShortLinkController {
                 .data(shortLinkService.updateLink(id, request))
                 .build();
     }
+    @DeleteMapping("/{id}")
+    @ResponseStatus(HttpStatus.NO_CONTENT)
+    public void deleteLink(@PathVariable Long id) {
+
+        shortLinkService.deleteLink(id);
+
+    }
 }

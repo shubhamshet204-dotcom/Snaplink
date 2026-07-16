@@ -45,4 +45,9 @@ public class ShortLink {
     public void onCreate() {
         createdAt = LocalDateTime.now();
     }
+    @Column(nullable = false)
+    @Builder.Default
+    private Boolean deleted = false;
+
+    private LocalDateTime deletedAt;
 }

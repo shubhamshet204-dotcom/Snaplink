@@ -16,4 +16,7 @@ public interface ShortLinkService {
     List<ShortLinkResponse> getMyLinks();
 
     ShortLinkResponse updateLink(Long id, UpdateShortLinkRequest request);
+
+    void deleteLink(Long id);
+
 }

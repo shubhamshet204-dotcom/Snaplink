@@ -73,6 +73,7 @@ public class ShortLinkServiceImpl implements ShortLinkService {
                 .password(request.getPassword())
                 .expiresAt(request.getExpiresAt())
                 .clickCount(0L)
+                .deleted(false)
                 .user(user)
                 .build();
 
@@ -84,7 +85,8 @@ public class ShortLinkServiceImpl implements ShortLinkService {
     @Override
     public String redirect(String shortCode, HttpServletRequest request) {
 
-        ShortLink shortLink = shortLinkRepository.findByShortCode(shortCode)
+        ShortLink shortLink = shortLinkRepository
+                .findByShortCodeAndDeletedFalse(shortCode)
                 .orElseThrow(() -> new ResourceNotFoundException("Short link not found"));
 
         if (shortLink.getExpiresAt() != null &&
@@ -117,7 +119,7 @@ public class ShortLinkServiceImpl implements ShortLinkService {
         User user = getLoggedInUser();
 
         return shortLinkMapper.toResponseList(
-                shortLinkRepository.findByUser(user)
+                shortLinkRepository.findByUserAndDeletedFalse(user)
         );
     }
 
@@ -126,7 +128,8 @@ public class ShortLinkServiceImpl implements ShortLinkService {
 
         User user = getLoggedInUser();
 
-        ShortLink shortLink = shortLinkRepository.findByIdAndUser(id, user)
+        ShortLink shortLink = shortLinkRepository
+                .findByIdAndUserAndDeletedFalse(id, user)
                 .orElseThrow(() -> new ResourceNotFoundException("Link not found"));
 
         if (request.getOriginalUrl() != null)
@@ -153,6 +156,21 @@ public class ShortLinkServiceImpl implements ShortLinkService {
         shortLinkRepository.save(shortLink);
 
         return shortLinkMapper.toResponse(shortLink);
+    }
+
+    @Override
+    public void deleteLink(Long id) {
+
+        User user = getLoggedInUser();
+
+        ShortLink shortLink = shortLinkRepository
+                .findByIdAndUserAndDeletedFalse(id, user)
+                .orElseThrow(() -> new ResourceNotFoundException("Link not found"));
+
+        shortLink.setDeleted(true);
+        shortLink.setDeletedAt(LocalDateTime.now());
+
+        shortLinkRepository.save(shortLink);
     }
 
     private String getBrowser(String userAgent) {

@@ -1,4 +1,3 @@
-
 package com.shubham.snaplink.repository;
 
 import com.shubham.snaplink.entity.ShortLink;
@@ -10,7 +9,7 @@ import java.util.Optional;
 
 public interface ShortLinkRepository extends JpaRepository<ShortLink, Long> {
 
-    Optional<ShortLink> findByShortCode(String shortCode);
+    Optional<ShortLink> findByShortCodeAndDeletedFalse(String shortCode);
 
     Optional<ShortLink> findByCustomAlias(String customAlias);
 
@@ -18,7 +17,8 @@ public interface ShortLinkRepository extends JpaRepository<ShortLink, Long> {
 
     boolean existsByCustomAlias(String customAlias);
 
-    List<ShortLink> findByUser(User user);
+    List<ShortLink> findByUserAndDeletedFalse(User user);
 
-    Optional<ShortLink> findByIdAndUser(Long id, User user);
+    Optional<ShortLink> findByIdAndUserAndDeletedFalse(Long id, User user);
+
 }
