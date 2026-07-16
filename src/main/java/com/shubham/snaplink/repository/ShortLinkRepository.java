@@ -1,8 +1,10 @@
 package com.shubham.snaplink.repository;
 
 import com.shubham.snaplink.entity.ShortLink;
+import com.shubham.snaplink.entity.User;
 import org.springframework.data.jpa.repository.JpaRepository;
 
+import java.util.List;
 import java.util.Optional;
 
 public interface ShortLinkRepository extends JpaRepository<ShortLink, Long> {
@@ -14,5 +16,7 @@ public interface ShortLinkRepository extends JpaRepository<ShortLink, Long> {
     boolean existsByShortCode(String shortCode);
 
     boolean existsByCustomAlias(String customAlias);
+
+    List<ShortLink> findByUser(User user);
 
 }

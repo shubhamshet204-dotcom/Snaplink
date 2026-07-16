@@ -16,9 +16,11 @@ import com.shubham.snaplink.service.ShortLinkService;
 import com.shubham.snaplink.util.ShortCodeGenerator;
 import jakarta.servlet.http.HttpServletRequest;
 import lombok.RequiredArgsConstructor;
+import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.stereotype.Service;
 
 import java.time.LocalDateTime;
+import java.util.List;
 
 @Service
 @RequiredArgsConstructor
@@ -53,7 +55,12 @@ public class ShortLinkServiceImpl implements ShortLinkService {
             } while (shortLinkRepository.existsByShortCode(shortCode));
         }
 
-        User user = userRepository.findById(1L)
+        String email = SecurityContextHolder
+                .getContext()
+                .getAuthentication()
+                .getName();
+
+        User user = userRepository.findByEmail(email)
                 .orElseThrow(() -> new ResourceNotFoundException("User not found"));
 
         ShortLink shortLink = ShortLink.builder()
@@ -99,6 +106,22 @@ public class ShortLinkServiceImpl implements ShortLinkService {
         clickAnalyticsRepository.save(analytics);
 
         return shortLink.getOriginalUrl();
+    }
+
+    @Override
+    public List<ShortLinkResponse> getMyLinks() {
+
+        String email = SecurityContextHolder
+                .getContext()
+                .getAuthentication()
+                .getName();
+
+        User user = userRepository.findByEmail(email)
+                .orElseThrow(() -> new ResourceNotFoundException("User not found"));
+
+        List<ShortLink> links = shortLinkRepository.findByUser(user);
+
+        return shortLinkMapper.toResponseList(links);
     }
 
     private String getBrowser(String userAgent) {
