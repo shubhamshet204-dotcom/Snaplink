@@ -37,9 +37,7 @@ public class DashboardServiceImpl implements DashboardService {
         List<ShortLink> topLinks = shortLinkRepository
                 .findTop5ByUserAndDeletedFalseOrderByClickCountDesc(user);
 
-        long totalClicks = topLinks.stream()
-                .mapToLong(ShortLink::getClickCount)
-                .sum();
+        long totalClicks = shortLinkRepository.getTotalClicks(user);
 
         List<ShortLinkResponse> topLinkResponses =
                 shortLinkMapper.toResponseList(topLinks);

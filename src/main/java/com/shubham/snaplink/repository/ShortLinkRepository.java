@@ -5,6 +5,7 @@ import com.shubham.snaplink.entity.User;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
 import org.springframework.data.jpa.repository.JpaRepository;
+import org.springframework.data.jpa.repository.Query;
 
 import java.util.List;
 import java.util.Optional;
@@ -41,4 +42,12 @@ public interface ShortLinkRepository extends JpaRepository<ShortLink, Long> {
     long countByUserAndDeletedTrue(User user);
 
     List<ShortLink> findTop5ByUserAndDeletedFalseOrderByClickCountDesc(User user);
+
+    @Query("""
+    SELECT COALESCE(SUM(s.clickCount), 0)
+    FROM ShortLink s
+    WHERE s.user = :user
+    AND s.deleted = false
+    """)
+    Long getTotalClicks(User user);
 }
