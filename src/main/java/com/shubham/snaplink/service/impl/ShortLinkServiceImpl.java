@@ -19,9 +19,13 @@ import jakarta.servlet.http.HttpServletRequest;
 import lombok.RequiredArgsConstructor;
 import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.stereotype.Service;
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.PageRequest;
+import org.springframework.data.domain.Pageable;
+import org.springframework.data.domain.Sort;
 
 import java.time.LocalDateTime;
-import java.util.List;
+
 
 @Service
 @RequiredArgsConstructor
@@ -114,13 +118,41 @@ public class ShortLinkServiceImpl implements ShortLinkService {
     }
 
     @Override
-    public List<ShortLinkResponse> getMyLinks() {
+    public Page<ShortLinkResponse> getMyLinks(
+            int page,
+            int size,
+            String sortBy,
+            String direction,
+            String search) {
 
         User user = getLoggedInUser();
 
-        return shortLinkMapper.toResponseList(
-                shortLinkRepository.findByUserAndDeletedFalse(user)
-        );
+        Sort sort = direction.equalsIgnoreCase("desc")
+                ? Sort.by(sortBy).descending()
+                : Sort.by(sortBy).ascending();
+
+        Pageable pageable = PageRequest.of(page, size, sort);
+
+        Page<ShortLink> shortLinks;
+
+        if (search == null || search.isBlank()) {
+
+            shortLinks = shortLinkRepository
+                    .findByUserAndDeletedFalse(user, pageable);
+
+        } else {
+
+            shortLinks = shortLinkRepository
+                    .findByUserAndDeletedFalseAndOriginalUrlContainingIgnoreCaseOrUserAndDeletedFalseAndCustomAliasContainingIgnoreCase(
+                            user,
+                            search,
+                            user,
+                            search,
+                            pageable
+                    );
+        }
+
+        return shortLinks.map(shortLinkMapper::toResponse);
     }
 
     @Override

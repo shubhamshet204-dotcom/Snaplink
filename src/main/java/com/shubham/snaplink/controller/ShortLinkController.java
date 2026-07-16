@@ -5,16 +5,11 @@ import com.shubham.snaplink.dto.request.UpdateShortLinkRequest;
 import com.shubham.snaplink.dto.response.ApiResponse;
 import com.shubham.snaplink.dto.response.ShortLinkResponse;
 import com.shubham.snaplink.service.ShortLinkService;
-import jakarta.servlet.http.HttpServletRequest;
 import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
-import org.springframework.http.HttpHeaders;
+import org.springframework.data.domain.Page;
 import org.springframework.http.HttpStatus;
-import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
-
-import java.net.URI;
-import java.util.List;
 
 @RestController
 @RequiredArgsConstructor
@@ -36,12 +31,25 @@ public class ShortLinkController {
     }
 
     @GetMapping("/my")
-    public ApiResponse<List<ShortLinkResponse>> getMyLinks() {
+    public ApiResponse<Page<ShortLinkResponse>> getMyLinks(
 
-        return ApiResponse.<List<ShortLinkResponse>>builder()
+            @RequestParam(defaultValue = "0") int page,
+            @RequestParam(defaultValue = "5") int size,
+            @RequestParam(defaultValue = "id") String sortBy,
+            @RequestParam(defaultValue = "asc") String direction,
+            @RequestParam(defaultValue = "") String search
+    ) {
+
+        return ApiResponse.<Page<ShortLinkResponse>>builder()
                 .success(true)
                 .message("Links fetched successfully")
-                .data(shortLinkService.getMyLinks())
+                .data(shortLinkService.getMyLinks(
+                        page,
+                        size,
+                        sortBy,
+                        direction,
+                        search
+                ))
                 .build();
     }
 
@@ -56,11 +64,11 @@ public class ShortLinkController {
                 .data(shortLinkService.updateLink(id, request))
                 .build();
     }
+
     @DeleteMapping("/{id}")
     @ResponseStatus(HttpStatus.NO_CONTENT)
     public void deleteLink(@PathVariable Long id) {
 
         shortLinkService.deleteLink(id);
-
     }
 }

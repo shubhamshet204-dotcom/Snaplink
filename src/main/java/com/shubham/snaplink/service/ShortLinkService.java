@@ -4,8 +4,7 @@ import com.shubham.snaplink.dto.request.CreateShortLinkRequest;
 import com.shubham.snaplink.dto.request.UpdateShortLinkRequest;
 import com.shubham.snaplink.dto.response.ShortLinkResponse;
 import jakarta.servlet.http.HttpServletRequest;
-
-import java.util.List;
+import org.springframework.data.domain.Page;
 
 public interface ShortLinkService {
 
@@ -13,10 +12,16 @@ public interface ShortLinkService {
 
     String redirect(String shortCode, HttpServletRequest request);
 
-    List<ShortLinkResponse> getMyLinks();
+    Page<ShortLinkResponse> getMyLinks(
+            int page,
+            int size,
+            String sortBy,
+            String direction,
+            String search
+    );
 
-    ShortLinkResponse updateLink(Long id, UpdateShortLinkRequest request);
+    ShortLinkResponse updateLink(Long id,
+                                 UpdateShortLinkRequest request);
 
     void deleteLink(Long id);
-
 }
