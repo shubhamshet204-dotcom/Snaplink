@@ -1,18 +1,34 @@
 package com.shubham.snaplink.mapper;
 
+import com.shubham.snaplink.config.AppProperties;
 import com.shubham.snaplink.dto.response.ShortLinkResponse;
 import com.shubham.snaplink.entity.ShortLink;
-import org.mapstruct.Mapper;
-import org.mapstruct.Mapping;
+import lombok.RequiredArgsConstructor;
+import org.springframework.stereotype.Component;
 
 import java.util.List;
 
-@Mapper(componentModel = "spring")
-public interface ShortLinkMapper {
+@Component
+@RequiredArgsConstructor
+public class ShortLinkMapper {
 
-    @Mapping(target = "shortUrl",
-            expression = "java(\"http://localhost:8082/\" + shortLink.getShortCode())")
-    ShortLinkResponse toResponse(ShortLink shortLink);
+    private final AppProperties appProperties;
 
-    List<ShortLinkResponse> toResponseList(List<ShortLink> links);
+    public ShortLinkResponse toResponse(ShortLink shortLink) {
+
+        return ShortLinkResponse.builder()
+                .id(shortLink.getId())
+                .originalUrl(shortLink.getOriginalUrl())
+                .shortCode(shortLink.getShortCode())
+                .shortUrl(appProperties.getBaseUrl() + "/" + shortLink.getShortCode())
+                .clickCount(shortLink.getClickCount())
+                .build();
+    }
+
+    public List<ShortLinkResponse> toResponseList(List<ShortLink> links) {
+
+        return links.stream()
+                .map(this::toResponse)
+                .toList();
+    }
 }
