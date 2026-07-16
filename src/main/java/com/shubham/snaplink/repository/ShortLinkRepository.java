@@ -6,6 +6,7 @@ import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
 import org.springframework.data.jpa.repository.JpaRepository;
 
+import java.util.List;
 import java.util.Optional;
 
 public interface ShortLinkRepository extends JpaRepository<ShortLink, Long> {
@@ -32,4 +33,12 @@ public interface ShortLinkRepository extends JpaRepository<ShortLink, Long> {
             String customAlias,
             Pageable pageable
     );
+
+    long countByUser(User user);
+
+    long countByUserAndDeletedFalse(User user);
+
+    long countByUserAndDeletedTrue(User user);
+
+    List<ShortLink> findTop5ByUserAndDeletedFalseOrderByClickCountDesc(User user);
 }
