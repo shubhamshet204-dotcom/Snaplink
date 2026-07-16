@@ -1,4 +1,4 @@
-package com.shubham.Snaplink;
+package com.shubham.snaplink;
 
 import org.junit.jupiter.api.Test;
 import org.springframework.boot.test.context.SpringBootTest;
