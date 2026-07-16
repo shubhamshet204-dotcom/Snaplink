@@ -5,6 +5,7 @@ import com.shubham.snaplink.dto.response.ShortLinkResponse;
 import com.shubham.snaplink.entity.ClickAnalytics;
 import com.shubham.snaplink.entity.ShortLink;
 import com.shubham.snaplink.entity.User;
+import com.shubham.snaplink.mapper.ShortLinkMapper;
 import com.shubham.snaplink.repository.ClickAnalyticsRepository;
 import com.shubham.snaplink.repository.ShortLinkRepository;
 import com.shubham.snaplink.repository.UserRepository;
@@ -24,6 +25,7 @@ public class ShortLinkServiceImpl implements ShortLinkService {
     private final UserRepository userRepository;
     private final ClickAnalyticsRepository clickAnalyticsRepository;
     private final ShortCodeGenerator shortCodeGenerator;
+    private final ShortLinkMapper shortLinkMapper;
 
     @Override
     public ShortLinkResponse createShortLink(CreateShortLinkRequest request) {
@@ -63,13 +65,7 @@ public class ShortLinkServiceImpl implements ShortLinkService {
 
         shortLinkRepository.save(shortLink);
 
-        return ShortLinkResponse.builder()
-                .id(shortLink.getId())
-                .originalUrl(shortLink.getOriginalUrl())
-                .shortCode(shortLink.getShortCode())
-                .shortUrl("http://localhost:8082/" + shortLink.getShortCode())
-                .clickCount(shortLink.getClickCount())
-                .build();
+        return shortLinkMapper.toResponse(shortLink);
     }
 
     @Override
@@ -131,7 +127,9 @@ public class ShortLinkServiceImpl implements ShortLinkService {
 
         if (userAgent == null) return "Unknown";
 
-        if (userAgent.contains("Mobile")) return "Mobile";
+        if (userAgent.contains("Mobile")) {
+            return "Mobile";
+        }
 
         return "Desktop";
     }
