@@ -1,6 +1,7 @@
 package com.shubham.snaplink.service.impl;
 
 import com.shubham.snaplink.dto.request.CreateShortLinkRequest;
+import com.shubham.snaplink.dto.request.UpdateShortLinkRequest;
 import com.shubham.snaplink.dto.response.ShortLinkResponse;
 import com.shubham.snaplink.entity.ClickAnalytics;
 import com.shubham.snaplink.entity.ShortLink;
@@ -32,6 +33,17 @@ public class ShortLinkServiceImpl implements ShortLinkService {
     private final ShortCodeGenerator shortCodeGenerator;
     private final ShortLinkMapper shortLinkMapper;
 
+    private User getLoggedInUser() {
+
+        String email = SecurityContextHolder
+                .getContext()
+                .getAuthentication()
+                .getName();
+
+        return userRepository.findByEmail(email)
+                .orElseThrow(() -> new ResourceNotFoundException("User not found"));
+    }
+
     @Override
     public ShortLinkResponse createShortLink(CreateShortLinkRequest request) {
 
@@ -45,23 +57,14 @@ public class ShortLinkServiceImpl implements ShortLinkService {
 
         if (request.getCustomAlias() != null &&
                 !request.getCustomAlias().isBlank()) {
-
             shortCode = request.getCustomAlias();
-
         } else {
-
             do {
                 shortCode = shortCodeGenerator.generateShortCode();
             } while (shortLinkRepository.existsByShortCode(shortCode));
         }
 
-        String email = SecurityContextHolder
-                .getContext()
-                .getAuthentication()
-                .getName();
-
-        User user = userRepository.findByEmail(email)
-                .orElseThrow(() -> new ResourceNotFoundException("User not found"));
+        User user = getLoggedInUser();
 
         ShortLink shortLink = ShortLink.builder()
                 .originalUrl(request.getOriginalUrl())
@@ -111,52 +114,68 @@ public class ShortLinkServiceImpl implements ShortLinkService {
     @Override
     public List<ShortLinkResponse> getMyLinks() {
 
-        String email = SecurityContextHolder
-                .getContext()
-                .getAuthentication()
-                .getName();
+        User user = getLoggedInUser();
 
-        User user = userRepository.findByEmail(email)
-                .orElseThrow(() -> new ResourceNotFoundException("User not found"));
+        return shortLinkMapper.toResponseList(
+                shortLinkRepository.findByUser(user)
+        );
+    }
 
-        List<ShortLink> links = shortLinkRepository.findByUser(user);
+    @Override
+    public ShortLinkResponse updateLink(Long id, UpdateShortLinkRequest request) {
 
-        return shortLinkMapper.toResponseList(links);
+        User user = getLoggedInUser();
+
+        ShortLink shortLink = shortLinkRepository.findByIdAndUser(id, user)
+                .orElseThrow(() -> new ResourceNotFoundException("Link not found"));
+
+        if (request.getOriginalUrl() != null)
+            shortLink.setOriginalUrl(request.getOriginalUrl());
+
+        if (request.getCustomAlias() != null &&
+                !request.getCustomAlias().isBlank()) {
+
+            if (!request.getCustomAlias().equals(shortLink.getCustomAlias())
+                    && shortLinkRepository.existsByCustomAlias(request.getCustomAlias())) {
+                throw new ResourceAlreadyExistsException("Custom alias already exists");
+            }
+
+            shortLink.setCustomAlias(request.getCustomAlias());
+            shortLink.setShortCode(request.getCustomAlias());
+        }
+
+        if (request.getPassword() != null)
+            shortLink.setPassword(request.getPassword());
+
+        if (request.getExpiresAt() != null)
+            shortLink.setExpiresAt(request.getExpiresAt());
+
+        shortLinkRepository.save(shortLink);
+
+        return shortLinkMapper.toResponse(shortLink);
     }
 
     private String getBrowser(String userAgent) {
-
         if (userAgent == null) return "Unknown";
-
         if (userAgent.contains("Chrome")) return "Chrome";
         if (userAgent.contains("Firefox")) return "Firefox";
         if (userAgent.contains("Edg")) return "Edge";
         if (userAgent.contains("Safari")) return "Safari";
-
         return "Unknown";
     }
 
     private String getOperatingSystem(String userAgent) {
-
         if (userAgent == null) return "Unknown";
-
         if (userAgent.contains("Windows")) return "Windows";
         if (userAgent.contains("Mac")) return "MacOS";
         if (userAgent.contains("Linux")) return "Linux";
         if (userAgent.contains("Android")) return "Android";
         if (userAgent.contains("iPhone")) return "iOS";
-
         return "Unknown";
     }
 
     private String getDevice(String userAgent) {
-
         if (userAgent == null) return "Unknown";
-
-        if (userAgent.contains("Mobile")) {
-            return "Mobile";
-        }
-
-        return "Desktop";
+        return userAgent.contains("Mobile") ? "Mobile" : "Desktop";
     }
 }

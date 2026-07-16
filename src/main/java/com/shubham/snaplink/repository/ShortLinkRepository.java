@@ -1,3 +1,4 @@
+
 package com.shubham.snaplink.repository;
 
 import com.shubham.snaplink.entity.ShortLink;
@@ -19,4 +20,5 @@ public interface ShortLinkRepository extends JpaRepository<ShortLink, Long> {
 
     List<ShortLink> findByUser(User user);
 
+    Optional<ShortLink> findByIdAndUser(Long id, User user);
 }

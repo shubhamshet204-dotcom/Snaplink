@@ -1,14 +1,19 @@
 package com.shubham.snaplink.controller;
 
 import com.shubham.snaplink.dto.request.CreateShortLinkRequest;
+import com.shubham.snaplink.dto.request.UpdateShortLinkRequest;
 import com.shubham.snaplink.dto.response.ApiResponse;
 import com.shubham.snaplink.dto.response.ShortLinkResponse;
 import com.shubham.snaplink.service.ShortLinkService;
+import jakarta.servlet.http.HttpServletRequest;
 import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
+import org.springframework.http.HttpHeaders;
 import org.springframework.http.HttpStatus;
+import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 
+import java.net.URI;
 import java.util.List;
 
 @RestController
@@ -40,4 +45,15 @@ public class ShortLinkController {
                 .build();
     }
 
+    @PutMapping("/{id}")
+    public ApiResponse<ShortLinkResponse> updateLink(
+            @PathVariable Long id,
+            @RequestBody UpdateShortLinkRequest request) {
+
+        return ApiResponse.<ShortLinkResponse>builder()
+                .success(true)
+                .message("Link updated successfully")
+                .data(shortLinkService.updateLink(id, request))
+                .build();
+    }
 }
