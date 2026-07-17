@@ -6,7 +6,7 @@ services:
     container_name: snaplink-mysql
     environment:
       MYSQL_DATABASE: snaplink
-      MYSQL_ROOT_PASSWORD: Shubham@30
+      MYSQL_ROOT_PASSWORD: ${MYSQL_ROOT_PASSWORD:-defaultpassword}
     ports:
       - "3306:3306"
     volumes:
@@ -28,7 +28,7 @@ services:
     environment:
       SPRING_DATASOURCE_URL: jdbc:mysql://mysql-db:3306/snaplink?createDatabaseIfNotExist=true&useSSL=false&allowPublicKeyRetrieval=true
       SPRING_DATASOURCE_USERNAME: root
-      SPRING_DATASOURCE_PASSWORD: Shubham@30
+      SPRING_DATASOURCE_PASSWORD: ${DB_PASSWORD:-defaultpassword}
       SPRING_DATA_REDIS_HOST: redis-cache
       SPRING_DATA_REDIS_PORT: 6379
       APP_BASE_URL: http://localhost:8082
