@@ -66,8 +66,8 @@ Make sure you have **Docker Desktop** installed and running on your machine.
 2. **Create local environment secrets:**
    Create a `.env` file in the root folder of the repository:
    ```env
-   MYSQL_ROOT_PASSWORD=Shubham@30
-   DB_PASSWORD=Shubham@30
+   MYSQL_ROOT_PASSWORD=your_mysql_root_password
+   DB_PASSWORD=your_mysql_db_password
    ```
 
 3. **Start the application:**
