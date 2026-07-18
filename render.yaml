@@ -1,0 +1,28 @@
+services:
+  - type: web
+    name: snaplink-backend
+    runtime: docker
+    dockerfilePath: Dockerfile
+    dockerContext: Snaplink
+    plan: free
+    envVars:
+      - key: PORT
+        value: 8082
+      - key: SPRING_DATASOURCE_URL
+        sync: false
+      - key: SPRING_DATASOURCE_USERNAME
+        sync: false
+      - key: SPRING_DATASOURCE_PASSWORD
+        sync: false
+      - key: SPRING_DATA_REDIS_HOST
+        sync: false
+      - key: SPRING_DATA_REDIS_PORT
+        sync: false
+      - key: SPRING_DATA_REDIS_PASSWORD
+        sync: false
+      - key: JWT_SECRET
+        generateValue: true
+      - key: APP_BASE_URL
+        sync: false
+      - key: APP_FRONTEND_URL
+        sync: false
