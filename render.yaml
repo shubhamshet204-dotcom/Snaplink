@@ -2,7 +2,7 @@ services:
   - type: web
     name: snaplink-backend
     runtime: docker
-    dockerfilePath: Dockerfile
+    dockerfilePath: Snaplink/Dockerfile
     dockerContext: Snaplink
     plan: free
     envVars:
